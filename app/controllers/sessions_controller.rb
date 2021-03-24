@@ -3,20 +3,24 @@ class SessionsController < ApplicationController
   end
 
   def create
-    user = user_params
-    user[:email] = user[:email].downcase
-    new_user = User.create!(user)
-    if new_user.save
-      session[:user_id] = new_user.id
-      flash[:success] = "Welcome #{new_user.name}"
-      redirect_to root_path
+    user = User.find_by(email: params[:email].downcase)
+    if user && user.authenticate(params[:password])
+      session[:user_id] = user.id
+      flash[:success] = "Welcome to your dashboard, #{user.name}!"
+      redirect_to user_dashboard_index_path(user)
     else
-      render :new
-      flash[:error] = new_user.errors.full_messages.to_sentence
+      flash[:error] = 'Credentials do not match'
+      render :login_form
     end
   end
 
   def destroy
-    
+    session[:user_id] = nil
+    redirect_to root
+  end
+
+  private
+  def user_params
+    params.permit(:name, :email, :password, :password_confirmation)
   end
 end

@@ -3,13 +3,21 @@ class UsersController < ApplicationController
   end
 
   def create
-    user = User.create(user_params)
-    if user.save
-      flash[:succes] = "Welcome to Ballpark Tracker #{user.name}!"
-      redirect_to user_dashboard_index_path(user)
+    user = user_params
+    user[:email] = user[:email].downcase
+    new_user = User.create!(user)
+    if new_user.save
+      session[:user_id] = new_user.id
+      flash[:success] = "Welcome to your dashboard, #{new_user.name}!"
+      redirect_to user_dashboard_index_path(new_user)
     else
-      flash[:error] = user.errors.full_messages.to_sentence
       render :new
-    end 
+      flash[:error] = new_user.errors.full_messages.to_sentence
+    end
+  end
+
+  private
+  def user_params
+    params.permit(:name, :email, :password, :password_confirmation)
   end
 end
